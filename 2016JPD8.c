@@ -21,77 +21,46 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
-/*
 int velocity;
+float flywheelSetpoint;
+float flywheelSpeed;
+float flywheelKp = .01;
 int position1;
 int position2;
 
 task flywheelVelocity(){
-
-while(true){
-
-position1 = nMotorEncoder(lrFlywheel);
-wait1Msec(200);
-position2 = nMotorEncoder(lrFlywheel);
-wait1Msec(200);
-velocity = (position2 - position1)/4;
-
-	}
-}*/
-float pidRequestedValue = 1000;
-
-task maintainFlywheel () {
-
-	int targetVelocity;
-
-	float Kp = 2.0;
-	float Ki = 0.04;
-	float Kd = 0;
-
-	float pidError;
-	float pidLastError;
-	float pidIntegral;
-	float pidDerivative;
-	float pidDrive;
-	float pidSensorCurrentValue;
-
-	pidLastError = 0;
-	pidIntegral = 0;
-
-	nMotorEncoder(RDflywheel) = 0;
-
-	while(true) {
-		pidSensorCurrentValue - pidRequestedValue;
-
-		//Integral
-		if(Ki != 0) {
-			if(abs(pidError) < 50)
-				pidIntegral = pidIntegral + pidError;
-			else
-				pidIntegral = 0;
-		}
-		else
-			pidIntegral  = 0;
-
-		//calculate derivative
-		pidDerivative = pidError - pidLastError;
-		pidLastError = pidError;
-
-		pidDrive = (Kp * pidError) + (Ki * pidIntegral) + (Kd* pidDerivative);
-
-		//limits
-		if(pidDrive > 127)
-			pidDrive = 127;
-		if(pidDrive < -127)
-			pidDrive = 127;
-
-			int motorSpeed = pidDrive *
-			motor[RDflywheel] = pidDrive * pidMotorScale;
-
-
-
+	while(true){
+		position1 = nMotorEncoder(RDflywheel);
+		wait1Msec(200);
+		position2 = nMotorEncoder(RDflywheel);
+		wait1Msec(200);
+		velocity = (position2 - position1)/4;
 	}
 }
+
+task flywheelP(){
+	float error;
+
+	startTask(flywheelVelocity);
+
+	while(true){
+
+		error = flywheelSetpoint - velocity;
+		flywheelSpeed += (flywheelKp*error);
+
+		if(flywheelSpeed > 127)
+			flywheelSpeed = 127;
+		else if (flywheelSpeed < 0)
+			flywheelSpeed = 0;
+
+		motor[LDflywheel] = flywheelSpeed;
+		motor[LUflywheel] = flywheelSpeed;
+		motor[RDflywheel] = flywheelSpeed;
+		motor[RUflywheel] = flywheelSpeed;
+		wait1Msec(30);
+	}
+}
+
 void speedUpFlywheel(){
 	while(motorSpeed < 90){
 		if(motorSpeed < 90)
