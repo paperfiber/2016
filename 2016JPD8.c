@@ -75,6 +75,7 @@ void speedUpFlywheel(){
 
 		wait1Msec(250);
 	}
+	//startTask(flywheelP);
 }
 
 
@@ -149,7 +150,8 @@ task usercontrol()
 	startTask(drive);
 	startTask(intake);
 	speedUpFlywheel();
-	while(true){
+
+	while(true){ /*
 		if(vexRT(Btn8U)){
 			motor[LUflywheel] = 127;
 			motor[LDflywheel] = 127;
@@ -161,10 +163,10 @@ task usercontrol()
 			motor[RUflywheel] = 100;
 			motor[RDflywheel] = 100;
 		}
-		else if(vexRT(Btn8L))
+		*/
+		startTask(flywheelVelocity);
+		if(vexRT(Btn8L))
 			slowDownFlywheel();
 		wait1Msec(25);
 	}
-
-
 }
