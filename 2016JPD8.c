@@ -21,8 +21,8 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
-int velocity;
-float flywheelSetpoint;
+float velocity;
+float flywheelSetpoint = 400;
 float flywheelSpeed;
 float flywheelKp = .01;
 int position1;
@@ -34,7 +34,7 @@ task flywheelVelocity(){
 		wait1Msec(200);
 		position2 = nMotorEncoder(RDflywheel);
 		wait1Msec(200);
-		velocity = (position2 - position1)/4;
+		velocity = (position2 - position1)/4*10;
 	}
 }
 
@@ -149,6 +149,7 @@ task usercontrol()
 //	startTask(shooter);
 	startTask(drive);
 	startTask(intake);
+	startTask(flywheelVelocity);
 	speedUpFlywheel();
 
 	while(true){ /*
@@ -164,7 +165,7 @@ task usercontrol()
 			motor[RDflywheel] = 100;
 		}
 		*/
-		startTask(flywheelVelocity);
+
 		if(vexRT(Btn8L))
 			slowDownFlywheel();
 		wait1Msec(25);
