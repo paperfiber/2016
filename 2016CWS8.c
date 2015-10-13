@@ -24,6 +24,7 @@
 int motorSpeed = 0;
 //float velocity;
 int waitTime = 270;
+bool isOkayToShoot = true;
 
 void speedUpFlywheel(){
 	while(motorSpeed < 90){
@@ -82,24 +83,25 @@ task shooter(){
 
 task drive(){
 	while(true){
-		motor[LFdrive] = vexRT(Ch3);
-		motor[LBMdrive] = vexRT(Ch3);
-		motor[RFdrive] = vexRT(Ch2);
-		motor[RBMdrive] = vexRT(Ch2);
+		motor[LFdrive] 	= vexRT(Ch3);
+		motor[LBMdrive]	= vexRT(Ch3);
+		motor[RFdrive] 	= vexRT(Ch2);
+		motor[RBMdrive]	= vexRT(Ch2);
 		wait1Msec(25);
 	}
 }
 
 task loadFire(){ // make this shit simpler
 	while(true){
-		while(!SensorValue(ballHigh)){
+		clearTimer(T1);
+		while(!SensorValue(ballHigh))
 			motor[feeder] = 127;
+		while(SensorValue(ballHigh)) {
+			if(time1[T1] < waitTime)
+				motor[feeder] = 0;
+			else
+				motor[feeder] = 127;
 		}
-		motor[feeder] = 0;
-		wait1Msec(waitTime);
-		motor[feeder] = 127;
-		wait1Msec(300);
-		motor[feeder] = 0;
 	}
 
 }
