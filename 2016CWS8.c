@@ -91,10 +91,6 @@ task drive(){
 	}
 }
 
-task timeCheck () {
-	while(!SensorValue(ballHigh))
-}
-
 task loadFire(){ // make this shit simpler
 	while(true){
 		clearTimer(T1);
