@@ -153,7 +153,7 @@ task shooter(){
 				motor[feeder] = 0;
 			}
 			if(feederToggle)
-				motor[feeder] = 90;
+				motor[feeder] = 127;
 			else
 				motor[feeder] = 0;
 			wait1Msec(25);
@@ -187,6 +187,7 @@ task shooter(){
 				motor[RDflywheel] = 127;
 			}
 			else if(vexRT(Btn8D)){
+				motor[LUflywheel] = 90;
 				motor[LDflywheel] = 90;
 				motor[RUflywheel] = 90;
 				motor[RDflywheel] = 90;
