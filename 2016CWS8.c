@@ -23,7 +23,7 @@
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
 //float velocity;
-int waitTime = 270;
+int waitTime = 27;
 
 void speedUpFlywheel(){
 	while(motorSpeed < 90){
@@ -92,14 +92,15 @@ task drive(){
 
 task loadFire(){ // make this shit simpler
 	while(true){
+		clearTimer(T1);
 		while(!SensorValue(ballHigh)){
 			motor[feeder] = 127;
 		}
 		motor[feeder] = 0;
-		wait1Msec(waitTime);
-		motor[feeder] = 127;
-		wait1Msec(300);
-		motor[feeder] = 0;
+		while(time1[T1] < waitTime)
+			wait1Msec(10);
+	motor[feeder] = 127;
+	wait1Msec(200);
 	}
 
 }
