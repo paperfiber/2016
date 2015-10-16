@@ -23,155 +23,120 @@
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
 //float velocity;
-<<<<<<< HEAD
 int waitTime = 600;
-bool canShoot = false;
 
-=======
-int waitTime = 270;
->>>>>>> origin/master
-
-void speedUpFlywheel(){
-	while(motorSpeed < 90){
-		if(motorSpeed < 90)
-			motorSpeed += 2;
-		else
-			motorSpeed = 90;
-
-		motor[LUflywheel] = motorSpeed;
-		motor[LDflywheel] = motorSpeed;
-		motor[RUflywheel] = motorSpeed;
-		motor[RUflywheel] = motorSpeed;
-
-		wait1Msec(250);
-	}
-}
-
-void slowDownFlywheel(){
-	while(motorSpeed > 0){
-		if(motorSpeed > 0)
+void flywheelSpeed (int speed) {
+	while(speed != motorSpeed) {
+		if (speed > 127)									//If we give a speed that's too high, discard it
+			speed = 127;
+		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to the absolute value
+			speed = abs(speed);
+		else if (speed + 1 == motorSpeed)	//If the speed of the motor is close enough, make small adjustments
+			motorSpeed -= 1;
+		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 2 per 25 msec
 			motorSpeed -= 2;
-		else
-			motorSpeed = 0;
+		else if (speed - 1 == motorSpeed) //If the speed of the motor is close enough, make small adjustments
+			motorSpeed += 1;
+		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 2 per 25 msec
+			motorSpeed += 2;
+		else															//catch any exceptions
+			motorSpeed = speed;
 
+		//set the speeds of the wheels
 		motor[LUflywheel] = motorSpeed;
 		motor[LDflywheel] = motorSpeed;
 		motor[RUflywheel] = motorSpeed;
-		motor[RDflywheel] = motorSpeed;
+		motor[RUflywheel] = motorSpeed;
 
-		wait1Msec(250);
+		wait1Msec(25);  //25msec delay
 	}
 }
 
 task shooter(){
+	//loop it
 	while(true){
-		if(vexRT(Btn6U)){
-			if(!vexRT(Btn6D)){
-				speedUpFlywheel();
-				motor[LUflywheel] = 127;
-				motor[LDflywheel] = 127;
-				motor[RUflywheel] = 127;
-				motor[RDflywheel] = 127;
-			}
 
+		flywheelSpeed(50);			//idle speed for flywheel
 
-		}
-		else if(vexRT(Btn6D)){
-			if(!vexRT(Btn6U))
-				slowDownFlywheel();
-		}
-		wait1Msec(25);
+		if (vexRT(Btn7L))				//Slowly kill motors
+			flywheelSpeed(0);
+
+		else if (vexRT(Btn6U))	//Slow speed
+			flywheelSpeed(90);
+
+		else if (vexRT(Btn6D))	//Fast speed
+		 	flywheelSpeed(127);
+
+		wait1Msec(25); //25msec delay
 	}
 }
 
 
 
 task drive(){
+	//Drive loop
 	while(true){
-<<<<<<< HEAD
 		motor[LFdrive] 	= vexRT(Ch2);
 		motor[LBMdrive]	= vexRT(Ch2);
 		motor[RFdrive] 	= vexRT(Ch3);
 		motor[RBMdrive]	= vexRT(Ch3);
-=======
-		motor[LFdrive] = vexRT(Ch3);
-		motor[LBMdrive] = vexRT(Ch3);
-		motor[RFdrive] = vexRT(Ch2);
-		motor[RBMdrive] = vexRT(Ch2);
->>>>>>> origin/master
 		wait1Msec(25);
 	}
 }
 
-<<<<<<< HEAD
-task loadFireTimer(){
-	while(true){
-		canShoot = false;
-		wait1Msec(waitTime);
-		canShoot = true;
-		wait1Msec(300);
-	}
-}
-
-
 task loadFire(){
-
 	while(true){
-		clearTimer(T1);
-		while(!SensorValue(ballHigh))
+		clearTimer(T1); 							//Clear the timer
+		while(!SensorValue(ballHigh))	//Get a ball into the top posision
 			motor[feeder] = 127;
-		while(SensorValue(ballHigh)){
-			if(time1(T1) < waitTime )
-				motor[feeder] = 0;
-			else
-				motor[feeder] = 127;
-		wait1Msec(200);
-
-
+		while(SensorValue(ballHigh)){	//When there is a ball in the top position...
+			if(time1(T1) < waitTime )		//If we still need to wait more,
+				motor[feeder] = 0;				//don't shoot.
+			else												//If we've waited enough time,
+				motor[feeder] = 127;			//shoot.
+			wait1Msec(200);							//Wait for the ball to fully leave the intake
 		}
-=======
-task loadFire(){ // make this shit simpler
-	while(true){
-		while(!SensorValue(ballHigh)){
-			motor[feeder] = 127;
-		}
-		motor[feeder] = 0;
-		wait1Msec(waitTime);
-		motor[feeder] = 127;
-		wait1Msec(300);
-		motor[feeder] = 0;
->>>>>>> origin/master
+
+		wait1Msec(25);								//25msec delay
+
 	}
 }
 
 
-task intake(){ //make this shit simpler
+task intake() {
 	int swap = 0;
 	while(true){
+
+		//Begin shooting balls
 		if(vexRT(Btn8D)){
 			startTask(loadFire);
 			swap = 1;
 		}
 
-		else if(vexRT(Btn8U)){
+		//Stop shooting balls
+		if(vexRT(Btn8U)){
 			stopTask(loadFire);
 			motor[feeder] = 0;
 			swap = 0;
 		}
 
-
-		else if(vexRT(Btn5U)){
+		//Rake in balls
+		if(vexRT(Btn5U)){
 			motor[intake1] = 127;
 
 		}
-		else if(vexRT(Btn5D)){
+
+		//Manual feeder control
+		if(vexRT(Btn5D)){
 			motor[feeder] = 127;
 		}
-		else if(swap == 0){
+
+		//Kills everything if we stop firing
+		if(swap == 0){
 			motor[intake1] = 0;
 			motor[feeder] = 0;
 		}
-		wait1Msec(25);
+		wait1Msec(25); //25msec delay
 	}
 }
 
@@ -180,10 +145,16 @@ void pre_auton()
 	bStopTasksBetweenModes = true;
 }
 
-
 task autonomous()
 {
-	AutonomousCodePlaceholderForTesting();  // Remove this function call once you have "real" code.
+  ClearTimer(T2);
+	while(motorSpeed<90)
+		flywheelSpeed(90); 		//gets it to 90 before we start loadFire
+	startTask(loadFire);
+	while(time1(T2)<10000)
+		flywheelSpeed(90); 		//maintains 90
+  while(time1(T2)>10000) 	//when there is 5 seconds left
+    flywheelSpeed(0);			//begin to slow down
 }
 
 task usercontrol()
