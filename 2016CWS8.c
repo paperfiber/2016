@@ -4,10 +4,10 @@
 #pragma config(Motor,  port1,           feeder,        tmotorVex393TurboSpeed_HBridge, openLoop)
 #pragma config(Motor,  port2,           LUflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           LDflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, reversed)
-#pragma config(Motor,  port4,           LBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop, reversed)
-#pragma config(Motor,  port5,           LFdrive,       tmotorVex393TurboSpeed_MC29, openLoop)
+#pragma config(Motor,  port4,           LBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop)
+#pragma config(Motor,  port5,           LFdrive,       tmotorVex393TurboSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port6,           RBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop)
-#pragma config(Motor,  port7,           RFdrive,       tmotorVex393TurboSpeed_MC29, openLoop, reversed)
+#pragma config(Motor,  port7,           RFdrive,       tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port8,           RDflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, encoderPort, I2C_1)
 #pragma config(Motor,  port9,           RUflywheel,    tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port10,          intake1,       tmotorVex393TurboSpeed_HBridge, openLoop)
@@ -23,7 +23,9 @@
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
 //float velocity;
-int waitTime = 27;
+int waitTime = 600;
+bool canShoot = false;
+
 
 void speedUpFlywheel(){
 	while(motorSpeed < 90){
@@ -82,28 +84,42 @@ task shooter(){
 
 task drive(){
 	while(true){
-		motor[LFdrive] = vexRT(Ch3);
-		motor[LBMdrive] = vexRT(Ch3);
-		motor[RFdrive] = vexRT(Ch2);
-		motor[RBMdrive] = vexRT(Ch2);
+		motor[LFdrive] 	= vexRT(Ch2);
+		motor[LBMdrive]	= vexRT(Ch2);
+		motor[RFdrive] 	= vexRT(Ch3);
+		motor[RBMdrive]	= vexRT(Ch3);
 		wait1Msec(25);
 	}
 }
 
-task loadFire(){ // make this shit simpler
+task loadFireTimer(){
+	while(true){
+		canShoot = false;
+		wait1Msec(waitTime);
+		canShoot = true;
+		wait1Msec(300);
+	}
+}
+
+
+task loadFire(){
+
 	while(true){
 		clearTimer(T1);
-		while(!SensorValue(ballHigh)){
+		while(!SensorValue(ballHigh))
 			motor[feeder] = 127;
-		}
-		motor[feeder] = 0;
-		while(time1[T1] < waitTime)
-			wait1Msec(10);
-	motor[feeder] = 127;
-	wait1Msec(200);
-	}
+		while(SensorValue(ballHigh)){
+			if(time1(T1) < waitTime )
+				motor[feeder] = 0;
+			else
+				motor[feeder] = 127;
+		wait1Msec(200);
 
+
+		}
+	}
 }
+
 
 task intake(){ //make this shit simpler
 	int swap = 0;
