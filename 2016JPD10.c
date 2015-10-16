@@ -24,13 +24,14 @@
 int motorSpeed = 0;
 //float velocity;
 int waitTime = 600;
+bool loadFireMode = false;
 
 void flywheelSpeed (int speed) {
 	while(speed != motorSpeed) {
 		if (speed > 127)									//If we give a speed that's too high, discard it
 			speed = 127;
 		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to the absolute value
-			speed = abs(speed);
+			speed = 0;
 		else if (speed + 1 == motorSpeed)	//If the speed of the motor is close enough, make small adjustments
 			motorSpeed -= 1;
 		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 2 per 25 msec
@@ -56,8 +57,6 @@ task shooter(){
 	//loop it
 	while(true){
 
-		flywheelSpeed(50);			//idle speed for flywheel
-
 		if (vexRT(Btn7L))				//Slowly kill motors
 			flywheelSpeed(0);
 
@@ -65,7 +64,10 @@ task shooter(){
 			flywheelSpeed(90);
 
 		else if (vexRT(Btn6D))	//Fast speed
-		 	flywheelSpeed(127);
+			flywheelSpeed(127);
+
+		else if(!loadFireMode)
+			flywheelSpeed(50);		//idle speed for flywheel
 
 		wait1Msec(25); //25msec delay
 	}
@@ -84,21 +86,29 @@ task drive(){
 	}
 }
 
-task loadFire(){
+task loadFire() {
+	int timesShot = 0;
+	while(motor[LUflywheel]<90)
+		flywheelSpeed(90);
 	while(true){
-		clearTimer(T1); 							//Clear the timer
-		while(!SensorValue(ballHigh))	//Get a ball into the top posision
+		clearTimer(T1); 								//Clear the timer
+		while(!SensorValue(ballHigh))		//Get a ball into the top posision
 			motor[feeder] = 127;
-		while(SensorValue(ballHigh)){	//When there is a ball in the top position...
-			if(time1(T1) < waitTime )		//If we still need to wait more,
-				motor[feeder] = 0;				//don't shoot.
-			else												//If we've waited enough time,
-				motor[feeder] = 127;			//shoot.
-			wait1Msec(200);							//Wait for the ball to fully leave the intake
+		while(SensorValue(ballHigh)) {	//When there is a ball in the top position...
+			if(time1(T1) < waitTime )			//If we still need to wait more,
+				motor[feeder] = 0;					//don't shoot.
+			else													//If we've waited enough time,
+				motor[feeder] = 127;				//shoot.
+				if(timesShot != 0) {
+					motor[LUflywheel] = 127;
+					motor[LDflywheel] = 127;
+					motor[RUflywheel] = 127;
+					motor[RUflywheel] = 127;
+				}
+			timesShot++;
+			wait1Msec(200);								//Wait for the ball to fully leave the intake
 		}
-
-		wait1Msec(25);								//25msec delay
-
+		wait1Msec(25);									//25msec delay
 	}
 }
 
@@ -110,14 +120,22 @@ task intake() {
 		//Begin shooting balls
 		if(vexRT(Btn8D)){
 			startTask(loadFire);
+			loadFireMode = true;
 			swap = 1;
 		}
 
 		//Stop shooting balls
-		if(vexRT(Btn8U)){
+		else if(vexRT(Btn8U)){
 			stopTask(loadFire);
+			loadFireMode = false;
 			motor[feeder] = 0;
 			swap = 0;
+		}
+
+		//Kills everything if we stop firing
+		else if(swap == 0){
+			motor[intake1] = 0;
+			motor[feeder] = 0;
 		}
 
 		//Rake in balls
@@ -130,12 +148,7 @@ task intake() {
 		if(vexRT(Btn5D)){
 			motor[feeder] = 127;
 		}
-
-		//Kills everything if we stop firing
-		if(swap == 0){
-			motor[intake1] = 0;
-			motor[feeder] = 0;
-		}
+		
 		wait1Msec(25); //25msec delay
 	}
 }
