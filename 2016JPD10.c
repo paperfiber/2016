@@ -27,44 +27,54 @@ int waitTime = 600;
 
 void flywheelSpeed (int speed) {
 	while(speed != motorSpeed) {
-		if (speed > 127)
+		if (speed > 127)									//If we give a speed that's too high, discard it
 			speed = 127;
-		else if (speed < 0)
-			speed = 0;
-		else if (speed + 1 == motorSpeed)
+		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to the absolute value
+			speed = abs(speed);
+		else if (speed + 1 == motorSpeed)	//If the speed of the motor is close enough, make small adjustments
 			motorSpeed -= 1;
-		else if (speed < motorSpeed)
+		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 2 per 25 msec
 			motorSpeed -= 2;
-		else if (speed - 1 == motorSpeed)
+		else if (speed - 1 == motorSpeed) //If the speed of the motor is close enough, make small adjustments
 			motorSpeed += 1;
-		else if (speed > motorSpeed)
+		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 2 per 25 msec
 			motorSpeed += 2;
-		else
+		else															//catch any exceptions
 			motorSpeed = speed;
 
+		//set the speeds of the wheels
 		motor[LUflywheel] = motorSpeed;
 		motor[LDflywheel] = motorSpeed;
 		motor[RUflywheel] = motorSpeed;
 		motor[RUflywheel] = motorSpeed;
+
+		wait1Msec(25);  //25msec delay
 	}
 }
 
 task shooter(){
+	//loop it
 	while(true){
-		flywheelSpeed(50);
-		if (vexRT(Btn7L))
+
+		flywheelSpeed(50);			//idle speed for flywheel
+
+		if (vexRT(Btn7L))				//Slowly kill motors
 			flywheelSpeed(0);
-		else if(vexRT(Btn6U) )
+
+		else if (vexRT(Btn6U))	//Slow speed
 			flywheelSpeed(90);
-		else if (vexRT(Btn6D)
+
+		else if (vexRT(Btn6D))	//Fast speed
 		 	flywheelSpeed(127);
-		wait1Msec(25);
+
+		wait1Msec(25); //25msec delay
 	}
 }
 
 
 
 task drive(){
+	//Drive loop
 	while(true){
 		motor[LFdrive] 	= vexRT(Ch2);
 		motor[LBMdrive]	= vexRT(Ch2);
@@ -75,62 +85,64 @@ task drive(){
 }
 
 task loadFire(){
-
 	while(true){
-		clearTimer(T1);
-		while(!SensorValue(ballHigh))
+		clearTimer(T1); 							//Clear the timer
+		while(!SensorValue(ballHigh))	//Get a ball into the top posision
 			motor[feeder] = 127;
-		while(SensorValue(ballHigh)){
-			if(time1(T1) < waitTime )
-				motor[feeder] = 0;
-			else
-				motor[feeder] = 127;
-		wait1Msec(200);
+		while(SensorValue(ballHigh)){	//When there is a ball in the top position...
+			if(time1(T1) < waitTime )		//If we still need to wait more,
+				motor[feeder] = 0;				//don't shoot.
+			else												//If we've waited enough time,
+				motor[feeder] = 127;			//shoot.
+			wait1Msec(200);							//Wait for the ball to fully leave the intake
 		}
+
+		wait1Msec(25);								//25msec delay
+
 	}
 }
 
 
-task intake(){ //make this shit simpler
+task intake() {
 	int swap = 0;
 	while(true){
+
+		//Begin shooting balls
 		if(vexRT(Btn8D)){
 			startTask(loadFire);
 			swap = 1;
 		}
 
+		//Stop shooting balls
 		if(vexRT(Btn8U)){
 			stopTask(loadFire);
 			motor[feeder] = 0;
 			swap = 0;
 		}
 
+		//Rake in balls
 		if(vexRT(Btn5U)){
 			motor[intake1] = 127;
 
 		}
+
+		//Manual feeder control
 		if(vexRT(Btn5D)){
 			motor[feeder] = 127;
 		}
+
+		//Kills everything if we stop firing
 		if(swap == 0){
 			motor[intake1] = 0;
 			motor[feeder] = 0;
 		}
-		wait1Msec(25);
+		wait1Msec(25); //25msec delay
 	}
 }
 
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
-}
-
-bool isOkayToShoot = true;
-task shootTimer() {
-	isOkayToShoot = false;
-	wait1Msec(waitTime);
-	isOkayToShoot = true;
-	endTask(autonTimer);
 }
 
 task autonomous()
