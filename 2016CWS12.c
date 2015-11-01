@@ -22,24 +22,20 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
+bool loadFireMode = false;
 //float velocity;
 int waitTime = 600;
-bool loadFireMode = false;
 
 void flywheelSpeed (int speed) {
 	while(speed != motorSpeed) {
 		if (speed > 127)									//If we give a speed that's too high, discard it
 			speed = 127;
-		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to the absolute value
+		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to 0
 			speed = 0;
-		else if (speed + 1 == motorSpeed)	//If the speed of the motor is close enough, make small adjustments
+		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 1 per x msec
 			motorSpeed -= 1;
-		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 2 per 25 msec
-			motorSpeed -= 2;
-		else if (speed - 1 == motorSpeed) //If the speed of the motor is close enough, make small adjustments
+		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 1 per x msec
 			motorSpeed += 1;
-		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 2 per 25 msec
-			motorSpeed += 2;
 		else															//catch any exceptions
 			motorSpeed = speed;
 
@@ -49,7 +45,7 @@ void flywheelSpeed (int speed) {
 		motor[RUflywheel] = motorSpeed;
 		motor[RUflywheel] = motorSpeed;
 
-		wait1Msec(25);  //25msec delay
+		wait1Msec(110);  //x msec delay
 	}
 }
 
@@ -64,9 +60,9 @@ task shooter(){
 			flywheelSpeed(90);
 
 		else if (vexRT(Btn6D))	//Fast speed
-			flywheelSpeed(127);
+			flywheelSpeed(70);
 
-		else if(!loadFireMode)
+		else if(!loadFireMode && vexRT(Btn7D))
 			flywheelSpeed(50);		//idle speed for flywheel
 
 		wait1Msec(25); //25msec delay
@@ -118,14 +114,14 @@ task intake() {
 	while(true){
 
 		//Begin shooting balls
-		if(vexRT(Btn8D)){
+		if(vexRT(Btn7D)){
 			startTask(loadFire);
 			loadFireMode = true;
 			swap = 1;
 		}
 
 		//Stop shooting balls
-		else if(vexRT(Btn8U)){
+		else if(vexRT(Btn7U)){
 			stopTask(loadFire);
 			loadFireMode = false;
 			motor[feeder] = 0;
@@ -148,7 +144,7 @@ task intake() {
 		if(vexRT(Btn5D)){
 			motor[feeder] = 127;
 		}
-		
+
 		wait1Msec(25); //25msec delay
 	}
 }
@@ -160,14 +156,14 @@ void pre_auton()
 
 task autonomous()
 {
-  clearTimer(T2);
+	clearTimer(T2);
 	while(motorSpeed<90)
 		flywheelSpeed(90); 		//gets it to 90 before we start loadFire
 	startTask(loadFire);
 	while(time1(T2)<10000)
 		flywheelSpeed(90); 		//maintains 90
-  while(time1(T2)>10000) 	//when there is 5 seconds left
-    flywheelSpeed(0);			//begin to slow down
+	while(time1(T2)>10000) 	//when there is 5 seconds left
+		flywheelSpeed(0);			//begin to slow down
 }
 
 task usercontrol()

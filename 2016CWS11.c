@@ -4,10 +4,10 @@
 #pragma config(Motor,  port1,           feeder,        tmotorVex393TurboSpeed_HBridge, openLoop)
 #pragma config(Motor,  port2,           LUflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           LDflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, reversed)
-#pragma config(Motor,  port4,           LBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop)
-#pragma config(Motor,  port5,           LFdrive,       tmotorVex393TurboSpeed_MC29, openLoop, reversed)
-#pragma config(Motor,  port6,           RBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop)
-#pragma config(Motor,  port7,           RFdrive,       tmotorVex393TurboSpeed_MC29, openLoop)
+#pragma config(Motor,  port4,           LBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop, reversed)
+#pragma config(Motor,  port5,           LFdrive,       tmotorVex393TurboSpeed_MC29, openLoop)
+#pragma config(Motor,  port6,           RBMdrive,      tmotorVex393TurboSpeed_MC29, openLoop, reversed)
+#pragma config(Motor,  port7,           RFdrive,       tmotorVex393TurboSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port8,           RDflywheel,    tmotorVex393TurboSpeed_MC29, openLoop, encoderPort, I2C_1)
 #pragma config(Motor,  port9,           RUflywheel,    tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port10,          intake1,       tmotorVex393TurboSpeed_HBridge, openLoop)
@@ -22,24 +22,20 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 int motorSpeed = 0;
+bool loadFireMode = false;
 //float velocity;
 int waitTime = 600;
-bool loadFireMode = false;
 
 void flywheelSpeed (int speed) {
 	while(speed != motorSpeed) {
 		if (speed > 127)									//If we give a speed that's too high, discard it
 			speed = 127;
-		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to the absolute value
+		else if (speed < 0)								//If we give a speed that would make the wheels spin negatively, set it to 0
 			speed = 0;
-		else if (speed + 1 == motorSpeed)	//If the speed of the motor is close enough, make small adjustments
+		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 1 per x msec
 			motorSpeed -= 1;
-		else if (speed < motorSpeed)      //If the wheels are too fast, lower the speed by 2 per 25 msec
-			motorSpeed -= 2;
-		else if (speed - 1 == motorSpeed) //If the speed of the motor is close enough, make small adjustments
+		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 1 per x msec
 			motorSpeed += 1;
-		else if (speed > motorSpeed)			//If the wheels are going too slow, raise the speed by 2 per 25 msec
-			motorSpeed += 2;
 		else															//catch any exceptions
 			motorSpeed = speed;
 
@@ -49,7 +45,7 @@ void flywheelSpeed (int speed) {
 		motor[RUflywheel] = motorSpeed;
 		motor[RUflywheel] = motorSpeed;
 
-		wait1Msec(25);  //25msec delay
+		wait1Msec(110);  //x msec delay
 	}
 }
 
@@ -64,10 +60,11 @@ task shooter(){
 			flywheelSpeed(90);
 
 		else if (vexRT(Btn6D))	//Fast speed
-			flywheelSpeed(127);
+			flywheelSpeed(80);
 
-		else if(!loadFireMode)
-			flywheelSpeed(50);		//idle speed for flywheel
+		else if(vexRT(Btn8D))
+			flywheelSpeed(50);			//idle speed for flywheel
+
 
 		wait1Msec(25); //25msec delay
 	}
@@ -78,37 +75,30 @@ task shooter(){
 task drive(){
 	//Drive loop
 	while(true){
-		motor[LFdrive] 	= vexRT(Ch2);
-		motor[LBMdrive]	= vexRT(Ch2);
-		motor[RFdrive] 	= vexRT(Ch3);
-		motor[RBMdrive]	= vexRT(Ch3);
+		motor[LFdrive] 	= vexRT(Ch3);
+		motor[LBMdrive]	= vexRT(Ch3);
+		motor[RFdrive] 	= vexRT(Ch2);
+		motor[RBMdrive]	= vexRT(Ch2);
 		wait1Msec(25);
 	}
 }
 
-task loadFire() {
-	int timesShot = 0;
-	while(motor[LUflywheel]<90)
-		flywheelSpeed(90);
+task loadFire(){
+	flywheelSpeed(127);
 	while(true){
-		clearTimer(T1); 								//Clear the timer
-		while(!SensorValue(ballHigh))		//Get a ball into the top posision
+		clearTimer(T1); 							//Clear the timer
+		while(!SensorValue(ballHigh))	//Get a ball into the top posision
 			motor[feeder] = 127;
-		while(SensorValue(ballHigh)) {	//When there is a ball in the top position...
-			if(time1(T1) < waitTime )			//If we still need to wait more,
-				motor[feeder] = 0;					//don't shoot.
-			else													//If we've waited enough time,
-				motor[feeder] = 127;				//shoot.
-				if(timesShot != 0) {
-					motor[LUflywheel] = 127;
-					motor[LDflywheel] = 127;
-					motor[RUflywheel] = 127;
-					motor[RUflywheel] = 127;
-				}
-			timesShot++;
-			wait1Msec(200);								//Wait for the ball to fully leave the intake
+		while(SensorValue(ballHigh)){	//When there is a ball in the top position...
+			if(time1(T1) < waitTime )		//If we still need to wait more,
+				motor[feeder] = 0;				//don't shoot.
+			else												//If we've waited enough time,
+				motor[feeder] = 127;			//shoot.
+			wait1Msec(200);							//Wait for the ball to fully leave the intake
 		}
-		wait1Msec(25);									//25msec delay
+
+		wait1Msec(25);								//25msec delay
+
 	}
 }
 
@@ -118,25 +108,26 @@ task intake() {
 	while(true){
 
 		//Begin shooting balls
-		if(vexRT(Btn8D)){
+		if(vexRT(Btn7D)){
 			startTask(loadFire);
-			loadFireMode = true;
+			loadFireMode = 1;
 			swap = 1;
 		}
 
 		//Stop shooting balls
-		else if(vexRT(Btn8U)){
+		else if(vexRT(Btn7U)){
 			stopTask(loadFire);
 			loadFireMode = false;
 			motor[feeder] = 0;
 			swap = 0;
 		}
 
-		//Kills everything if we stop firing
+				//Kills everything if we stop firing
 		else if(swap == 0){
 			motor[intake1] = 0;
 			motor[feeder] = 0;
 		}
+
 
 		//Rake in balls
 		if(vexRT(Btn5U)){
@@ -148,7 +139,7 @@ task intake() {
 		if(vexRT(Btn5D)){
 			motor[feeder] = 127;
 		}
-		
+
 		wait1Msec(25); //25msec delay
 	}
 }
@@ -160,14 +151,14 @@ void pre_auton()
 
 task autonomous()
 {
-  clearTimer(T2);
+	clearTimer(T2);
 	while(motorSpeed<90)
 		flywheelSpeed(90); 		//gets it to 90 before we start loadFire
 	startTask(loadFire);
 	while(time1(T2)<10000)
 		flywheelSpeed(90); 		//maintains 90
-  while(time1(T2)>10000) 	//when there is 5 seconds left
-    flywheelSpeed(0);			//begin to slow down
+	while(time1(T2)>10000) 	//when there is 5 seconds left
+		flywheelSpeed(0);			//begin to slow down
 }
 
 task usercontrol()
