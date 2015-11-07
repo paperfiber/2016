@@ -179,7 +179,7 @@ task
 FwControlTask()
 {
     // Set the gain
-    gain = 0.00015;
+    gain = 0.00006;
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -218,7 +218,7 @@ task fwmain()
     // Start the flywheel control task
     startTask( FwControlTask );
 
-    FwVelocitySet( 72, 0.7 );
+    FwVelocitySet( 65, 0.7 );
     // Main user control loop
     while(1)
         {
@@ -243,6 +243,22 @@ task fwmain()
         }
 }
 
+task feederWait () {
+	clearTimer(T4);
+	while(true) {
+		if(!SensorValue[ballHigh]) {
+			motor[feeder] = 127;
+		} else if(time1[T4]>=1500) {
+			motor[feeder] = 127;
+			clearTimer(T4);
+			wait1Msec(200);
+		} else {
+			motor[feeder] = 0;
+		}
+		wait1Msec(25);
+	}
+}
+
 void pre_auton() {
   // Set bStopTasksBetweenModes to false if you want to keep user created tasks running between
   // Autonomous and Tele-Op modes. You will need to manage all user created tasks if set to false.
@@ -259,14 +275,15 @@ task autonomous() {
 
 
 task usercontrol() {
-
+	nMotorEncoder[RUflywheel]=0;
 	startTask(fwmain);
-	motor[feeder]=127;
+	startTask(feederWait);
 	while(true){
 		if(SensorValue[slowDown]){
 			motor[feeder]=0;
 			stopTask(fwmain);
 			stopTask(FwControlTask);
+			stopTask(feederWait);
 			int motorSpeed = motor[LUflywheel];
 			while(motorSpeed>0){
 				motorSpeed-=2;
