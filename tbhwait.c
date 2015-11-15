@@ -179,7 +179,7 @@ task
 FwControlTask()
 {
     // Set the gain
-    gain = 0.00006;
+    gain = 0.00005;
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -218,7 +218,7 @@ task fwmain()
     // Start the flywheel control task
     startTask( FwControlTask );
 
-    FwVelocitySet( 65, 0.7 );
+    FwVelocitySet( 67, 0.7 );
     // Main user control loop
     while(1)
         {
