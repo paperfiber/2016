@@ -208,11 +208,11 @@ task usercontrol() {
 		else if(!vexRT(Btn5U) && !vexRT(Btn7R))
 			motor[intake1] = 0;
 		if(vexRT(Btn6D)) {
-			speed = 45;
+			speed = 40;
 			startTask(shooter);
 		}
 		else if(vexRT(Btn6U)){
-			speed = 70;
+			speed = 60;
 			startTask(shooter);
 		}
 		if(vexRT(Btn7R)){
