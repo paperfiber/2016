@@ -71,12 +71,12 @@ task shooterDJ () {
 	while (true)
 	{
 		if(vexRT(Btn7U))
-			speed++;
+			speed+=2;
 		if(vexRT(Btn7D))
-			speed--;
+			speed-=2;
 		if(SensorValue[ballHigh]&&canRunAgain) {
 			timesFed++;
-			speed+=22;//7;
+			speed+=27;//7;
 		}
 		if(timesFed>0 & canRunAgain)
 			canRunAgain = false;
@@ -159,12 +159,12 @@ task driveForwardEndAutonomous () {
 
 task autonomous()
 {
-	clearTimer(T2);
-	speed = 107; //was 97 into QM3-2
-	feederWaitTime = 900;
+	speed = 105; //was 97 into QM3-2
+	feederWaitTime = 1200;
 	startTask(shooterDJ);
+	wait1Msec(400);
 	motor[intake1] = 127;
-	while(time1[T2]<9300) {wait1Msec(25);}
+	while(true /*time1[T2]<9300*/) {wait1Msec(25);}
 
 	motor[intake1] = 0;
 	startTask(driveForwardEndAutonomous);
@@ -191,8 +191,8 @@ task usercontrol() {
 		if(vexRT(Btn8D) || autoStartShooter) {
 			autoFeeder = true;
 			if(fastMode) {
-				speed = 77;
-				feederWaitTime = 950;
+				speed = 80;
+				feederWaitTime = 1050;
 				} else {
 				speed = 72;
 				feederWaitTime = 1300;

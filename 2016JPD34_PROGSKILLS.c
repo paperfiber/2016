@@ -160,11 +160,11 @@ task driveForwardEndAutonomous () {
 task autonomous()
 {
 	clearTimer(T2);
-	speed = 107; //was 97 into QM3-2
+	speed = 105; //was 97 into QM3-2
 	feederWaitTime = 900;
 	startTask(shooterDJ);
 	motor[intake1] = 127;
-	while(time1[T2]<9300) {wait1Msec(25);}
+	while(true/*time1[T2]<9300*/) {wait1Msec(25);}
 
 	motor[intake1] = 0;
 	startTask(driveForwardEndAutonomous);
